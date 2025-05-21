@@ -79,10 +79,6 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to server." });
 });
 
-// Health check
-// const healthCheckRoutes = require("./routes/healthCheck.routes");
-// app.use("/health", healthCheckRoutes);
-
 // Dynamic route imports
 const routes = ["user", "book", "review"];
 
