@@ -1,31 +1,53 @@
 /**
  * Logger Utility
  * This file sets up the Winston logger for logging application messages.
- * It includes custom formats for console and file logging.
+ * It includes custom formats and separates error logs from general logs.
  */
 
 const { createLogger, format, transports } = require("winston");
-const { combine, timestamp, json, colorize } = format;
+const { combine, timestamp, printf, colorize, json } = format;
 
-// Custom format for console logging with colors
-const consoleLogFormat = format.combine(
-  format.colorize(),
-  format.printf(({ level, message, timestamp }) => {
-    return `${level}: ${message}`;
+// Console log format
+const consoleLogFormat = combine(
+  colorize({ all: true }),
+  timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  printf(({ level, message, timestamp }) => {
+    return `[${timestamp}] ${level}: ${message}`;
   })
 );
 
-// Create a Winston logger
+// JSON format for file logging
+const fileLogFormat = combine(timestamp(), json());
+
+// Create logger
 const logger = createLogger({
   level: "info",
-  format: combine(colorize(), timestamp(), json()),
   transports: [
+    // Console output
     new transports.Console({
       format: consoleLogFormat,
     }),
-    new transports.File({ filename: "app.log" }),
+
+    // General logs (info, success, debug, etc.)
+    new transports.File({
+      filename: "logs/app.log",
+      level: "info",
+      format: fileLogFormat,
+    }),
+
+    // Error logs only
+    new transports.File({
+      filename: "logs/error.log",
+      level: "error",
+      format: fileLogFormat,
+    }),
   ],
   exitOnError: false,
 });
+
+// Add custom success method
+logger.success = (msg) => {
+  logger.log("success", msg);
+};
 
 module.exports = logger;
